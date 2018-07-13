@@ -1,14 +1,11 @@
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.MessageProperties;
+import com.rabbitmq.client.*;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-public class AutoIvsProducer {
+public class InvestorProducer {
     public static void main(String[] args) throws IOException, TimeoutException {
         ConnectionFactory factory=new ConnectionFactory();
         factory.setHost("localhost");
@@ -18,12 +15,13 @@ public class AutoIvsProducer {
         param.put("x-max-priority", 10);
         channel.queueDeclare(LoanQueuesConstant.AUTO_INVESTOR_QUEUE,true,false,false,param);
         //分发信息
-        for (int i=0;i<20;i++){
-            String message="user"+i;
-            channel.basicPublish("", LoanQueuesConstant.AUTO_INVESTOR_QUEUE,
-                    MessageProperties.PERSISTENT_TEXT_PLAIN,message.getBytes());
-            System.out.println("new user added '"+message+"'");
-        }
+        String message="investor_1";
+        AMQP.BasicProperties.Builder builder = new AMQP.BasicProperties.Builder();
+        builder.priority(5);//默认权重0，手动投资权重5，则优先处理手动投资
+        AMQP.BasicProperties properties = builder.build();
+        channel.basicPublish("", LoanQueuesConstant.AUTO_INVESTOR_QUEUE,
+                properties,message.getBytes());
+        System.out.println("new user added '"+message+"'");
         channel.close();
         connection.close();
     }
